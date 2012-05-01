@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.neo4j.build</groupId>
+    <artifactId>grandparent</artifactId>
+    <version>33</version>
+    <relativePath/>
+  </parent>
+  <artifactId>ease-maven-plugin-parent</artifactId>
+  <groupId>org.neo4j.build.plugins</groupId>
+  <packaging>pom</packaging>
+  <version>1-SNAPSHOT</version>
+  <name>Neo4j Release Helper Parent</name>
+  <url>http://components.neo4j.org/${project.artifactId}/${project.version}</url>
+  <inceptionYear>2012</inceptionYear>
+  
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.build.timestamp.format>yyyy</maven.build.timestamp.format>
+    <currentYear>${maven.build.timestamp}</currentYear>
+    <skinGroupId>org.neo4j.maven.skins</skinGroupId>
+    <skinArtifactId>default-skin</skinArtifactId>
+    <skinVersion>4</skinVersion>
+    <licensesVersion>7</licensesVersion>
+    <license-text.header>AGPL-3-header.txt</license-text.header>
+  </properties>
+
+  <scm>
+    <connection>scm:git:git://github.com/neo4j/ease-maven-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:neo4j/ease-maven-plugin.git</developerConnection>
+    <url>https://github.com/neo4j/ease-maven-plugin</url>
+  </scm>
+
+
+  <issueManagement>
+    <url>https://github.com/neo4j/ease-maven-plugin</url>
+  </issueManagement>
+
+  <licenses>
+    <license>
+      <name>GNU Affero General Public License, Version 3</name>
+      <url>http://www.gnu.org/licenses/agpl-3.0-standalone.html</url>
+    </license>
+  </licenses>
+
+  <modules>
+    <module>plugin</module>
+    <module>example-freeze</module>
+    <module>example-thaw</module>
+  </modules>
+
+  <distributionManagement>
+    <site>
+      <id>neo4j-site</id>
+      <url>scpexe://components.neo4j.org/home/neo/components/${project.artifactId}/${project.version}</url>
+    </site>
+  </distributionManagement>
+
+</project>
