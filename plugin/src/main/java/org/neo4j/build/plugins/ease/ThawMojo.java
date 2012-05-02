@@ -21,11 +21,14 @@ package org.neo4j.build.plugins.ease;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.repository.MavenArtifactRepository;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -48,7 +51,23 @@ public class ThawMojo extends AbstractMojo
      * @parameter
      * @required
      */
-    protected List<String> groupIds;
+    protected List<String> includeGroupIds;
+
+    /**
+     * ArtifactIds to exclude from the project.
+     * 
+     * @parameter
+     */
+    protected List<String> excludeArtifactIds;
+
+    /**
+     * Local repo location for fetching dependencies to thaw. When this is
+     * defined, the dependencies to thaw will be fetched from there and not from
+     * the usual local repo. Using this setting is recommended.
+     * 
+     * @parameter
+     */
+    protected String thawDependencyRepositoryLocation;
 
     /**
      * @parameter default-value="${project}"
@@ -64,7 +83,7 @@ public class ThawMojo extends AbstractMojo
      * @required
      * @readonly
      */
-    protected ArtifactFactory artFactory;
+    protected ArtifactFactory artifactFactory;
 
     /**
      * Location of the local repository.
@@ -85,18 +104,49 @@ public class ThawMojo extends AbstractMojo
     {
         project.getAttachedArtifacts()
                 .clear();
+
+        if ( excludeArtifactIds == null )
+        {
+            excludeArtifactIds = Collections.emptyList();
+        }
+
+        ArtifactRepository dependencyRepo = null;
+        if ( thawDependencyRepositoryLocation == null )
+        {
+            dependencyRepo = localRepository;
+        }
+        else
+        {
+            dependencyRepo = new MavenArtifactRepository();
+            try
+            {
+                dependencyRepo.setUrl( new File(
+                        thawDependencyRepositoryLocation ).toURI()
+                        .toURL()
+                        .toExternalForm() );
+            }
+            catch ( MalformedURLException mue )
+            {
+                throw new MojoExecutionException(
+                        "Could not parse thaw dependency repository location: "
+                                + thawDependencyRepositoryLocation, mue );
+            }
+        }
         for ( Dependency dependency : project.getDependencies() )
         {
-            if ( groupIds.contains( dependency.getGroupId() ) )
+            if ( includeGroupIds.contains( dependency.getGroupId() )
+                 && !excludeArtifactIds.contains( dependency.getArtifactId() ) )
             {
-                Artifact findArtifactsArtifact = artFactory.createArtifactWithClassifier(
+                Artifact findArtifactsArtifact = artifactFactory.createArtifactWithClassifier(
                         dependency.getGroupId(), dependency.getArtifactId(),
                         dependency.getVersion(), "txt", "artifacts" );
                 Artifact artifactsArtifact = localRepository.find( findArtifactsArtifact );
                 File artifactsFile = artifactsArtifact.getFile();
                 if ( !artifactsFile.exists() )
                 {
-                    continue;
+                    throw new MojoExecutionException(
+                            "Could not find an artifact list for: "
+                                    + dependency );
                 }
 
                 String[] lines = null;
@@ -113,36 +163,17 @@ public class ThawMojo extends AbstractMojo
                 }
                 for ( String artifactString : lines )
                 {
-                    String[] strings = artifactString.split( ":" );
-                    if ( strings.length < 4 || strings.length > 5 )
+                    Artifact findArtifact = createArtifact( artifactString );
+                    if ( !"pom".equals( findArtifact.getType() ) )
                     {
-                        getLog().error(
-                                "Can't parse artifact coordinates: "
-                                        + artifactString );
-                        continue;
+                        // add the pom as well
+                        findAndAttachExternalArtifact(
+                                findArtifact.getGroupId(),
+                                findArtifact.getArtifactId(),
+                                findArtifact.getVersion(), "pom", null );
                     }
-                    String groupId = strings[0];
-                    String artifactId = strings[1];
-                    String type = strings[2];
-                    String version = null;
-                    String classifier = null;
-                    if ( strings.length == 5 )
-                    {
-                        version = strings[4];
-                        classifier = strings[3];
-                    }
-                    else if ( strings.length == 4 )
-                    {
-                        version = strings[3];
-                        if ( !"pom".equals( type ) )
-                        {
-                            // add the pom as well
-                            findAndAttachExternalArtifact( groupId, artifactId,
-                                    version, "pom", null );
-                        }
-                    }
-                    findAndAttachExternalArtifact( groupId, artifactId,
-                            version, type, classifier );
+
+                    findAndAttachExternalArtifact( findArtifact );
                 }
             }
         }
@@ -150,38 +181,77 @@ public class ThawMojo extends AbstractMojo
 
     private void findAndAttachExternalArtifact( String groupId,
             String artifactId, String version, String type, String classifier )
+            throws MojoExecutionException
     {
-        Artifact findArtifact = artFactory.createArtifactWithClassifier(
-                groupId, artifactId, version, type, classifier );
-        if ( findArtifact != null )
+        Artifact findArtifact = createArtifact( groupId, artifactId, version,
+                type, classifier );
+        findAndAttachExternalArtifact( findArtifact );
+    }
+
+    private void findAndAttachExternalArtifact( Artifact findArtifact )
+            throws MojoExecutionException
+    {
+        if ( findArtifact == null )
         {
-            Artifact artifactToAttach = localRepository.find( findArtifact );
-            if ( "pom".equals( type ) )
+            throw new MojoExecutionException( "Could not find artifact: "
+                                              + findArtifact );
+        }
+        Artifact artifactToAttach = localRepository.find( findArtifact );
+        if ( "pom".equals( artifactToAttach.getType() ) )
+        {
+            // point to a copy of the pom, otherwise it gets
+            // corrupted as target and source are the same.
+            // doesn't seem to happen to other artifacts.
+            String fileName = artifactToAttach.getFile()
+                    .getName();
+            System.out.println( "file: " + fileName );
+            File destination = new File( new File( project.getBuild()
+                    .getDirectory() ), fileName );
+            try
             {
-                // point to a copy of the pom, otherwise it gets
-                // corrupted as target and source are the same.
-                // doesn't seem to happen to other artifacts.
-                String fileName = artifactToAttach.getFile()
-                        .getName();
-                File destination = new File( new File( project.getBuild()
-                        .getDirectory() ), fileName );
-                try
-                {
-                    FileUtils.copyFileIfModified( artifactToAttach.getFile(),
-                            destination );
-                }
-                catch ( IOException e )
-                {
-                    e.printStackTrace();
-                }
-                artifactToAttach.setFile( destination );
+                FileUtils.copyFileIfModified( artifactToAttach.getFile(),
+                        destination );
             }
-            project.addAttachedArtifact( artifactToAttach );
-            System.out.println( "added: " + artifactToAttach );
+            catch ( IOException e )
+            {
+                e.printStackTrace();
+            }
+            artifactToAttach.setFile( destination );
         }
-        else
+        project.addAttachedArtifact( artifactToAttach );
+        System.out.println( "added: " + artifactToAttach );
+    }
+
+    private Artifact createArtifact( String groupId, String artifactId,
+            String version, String type, String classifier )
+    {
+        return artifactFactory.createArtifactWithClassifier( groupId,
+                artifactId, version, type, classifier );
+    }
+
+    private Artifact createArtifact( String coords )
+            throws MojoExecutionException
+    {
+        String[] strings = coords.split( ":" );
+        if ( strings.length < 4 || strings.length > 5 )
         {
-            getLog().error( "Could not find artifact: " + findArtifact );
+            throw new MojoExecutionException( "Can not parse coordinates: "
+                                              + coords );
         }
+        String groupId = strings[0];
+        String artifactId = strings[1];
+        String type = strings[2];
+        String version = null;
+        String classifier = null;
+        if ( strings.length == 5 )
+        {
+            version = strings[4];
+            classifier = strings[3];
+        }
+        else if ( strings.length == 4 )
+        {
+            version = strings[3];
+        }
+        return createArtifact( groupId, artifactId, version, type, classifier );
     }
 }

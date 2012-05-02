@@ -30,9 +30,9 @@
               <goal>thaw</goal>
             </goals>
             <configuration>
-              <groupIds>
-                <groupId>org.neo4j.build.plugins</groupId>
-              </groupIds>
+              <includeGroupIds>
+                <includeGroupId>org.neo4j.build.plugins</includeGroupId>
+              </includeGroupIds>
             </configuration>
           </execution>
         </executions>
