@@ -47,6 +47,8 @@
   <modules>
     <module>plugin</module>
     <module>example-freeze</module>
+    <module>example-freeze2</module>
+    <module>example-freeze3</module>
     <module>example-thaw</module>
   </modules>
 
