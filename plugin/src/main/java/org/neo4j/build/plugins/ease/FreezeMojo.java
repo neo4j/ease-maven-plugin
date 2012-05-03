@@ -35,6 +35,7 @@ import org.codehaus.plexus.util.FileUtils;
  * Goal which records artifacts.
  * 
  * @goal freeze
+ * @requiresProject true
  * @phase verify
  * @threadSafe true
  */

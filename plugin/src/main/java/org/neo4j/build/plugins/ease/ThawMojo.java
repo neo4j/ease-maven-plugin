@@ -21,7 +21,6 @@ package org.neo4j.build.plugins.ease;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,7 +29,6 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.artifact.repository.MavenArtifactRepository;
 import org.apache.maven.artifact.resolver.ArtifactCollector;
 import org.apache.maven.artifact.resolver.filter.AndArtifactFilter;
 import org.apache.maven.artifact.resolver.filter.ArtifactFilter;
@@ -38,8 +36,6 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectHelper;
-import org.apache.maven.repository.DelegatingLocalArtifactRepository;
-import org.apache.maven.repository.LocalArtifactRepository;
 import org.apache.maven.shared.artifact.filter.StrictPatternExcludesArtifactFilter;
 import org.apache.maven.shared.artifact.filter.StrictPatternIncludesArtifactFilter;
 import org.apache.maven.shared.dependency.tree.DependencyNode;
@@ -53,6 +49,7 @@ import org.codehaus.plexus.util.FileUtils;
  * 
  * @goal thaw
  * @phase verify
+ * @requiresProject true
  * @threadSafe true
  */
 public class ThawMojo extends AbstractMojo
@@ -79,15 +76,6 @@ public class ThawMojo extends AbstractMojo
      * @parameter expression="${excludeTransitive}" default-value="false"
      */
     protected boolean excludeTransitive;
-
-    /**
-     * Local repo location for fetching dependencies to thaw. When this is
-     * defined, the dependencies to thaw will be fetched from there and not from
-     * the usual local repo. Using this setting is recommended.
-     * 
-     * @parameter
-     */
-    protected String thawDependencyRepositoryLocation;
 
     /**
      * @parameter default-value="${project}"
@@ -145,50 +133,6 @@ public class ThawMojo extends AbstractMojo
     {
         project.getAttachedArtifacts()
                 .clear();
-
-        DelegatingLocalArtifactRepository delegatingRepo = new DelegatingLocalArtifactRepository(
-                localRepository );
-        ArtifactRepository dependencyRepo = null;
-        if ( thawDependencyRepositoryLocation != null )
-        {
-            LocalArtifactRepository thawDependencyRepository = new LocalArtifactRepository()
-            {
-                @Override
-                public Artifact find( Artifact artifact )
-                {
-                    return null;
-                }
-
-                @Override
-                public boolean hasLocalMetadata()
-                {
-                    // TODO Auto-generated method stub
-                    return false;
-                }
-            };
-            delegatingRepo.setIdeWorkspace( thawDependencyRepository );
-        }
-        if ( thawDependencyRepositoryLocation == null )
-        {
-            dependencyRepo = localRepository;
-        }
-        else
-        {
-            dependencyRepo = new MavenArtifactRepository();
-            try
-            {
-                dependencyRepo.setUrl( new File(
-                        thawDependencyRepositoryLocation ).toURI()
-                        .toURL()
-                        .toExternalForm() );
-            }
-            catch ( MalformedURLException mue )
-            {
-                throw new MojoExecutionException(
-                        "Could not parse thaw dependency repository location: "
-                                + thawDependencyRepositoryLocation, mue );
-            }
-        }
 
         for ( Artifact dependency : getDependencies() )
         {
@@ -251,27 +195,23 @@ public class ThawMojo extends AbstractMojo
                                               + findArtifact );
         }
         Artifact artifactToAttach = localRepository.find( findArtifact );
-        if ( "pom".equals( artifactToAttach.getType() ) || true )
+
+        String fileName = artifactToAttach.getFile()
+                .getName();
+        File destination = new File( new File( project.getBuild()
+                .getDirectory() ), fileName );
+        try
         {
-            // point to a copy of the pom, otherwise it gets
-            // corrupted as target and source are the same.
-            // doesn't seem to happen to other artifacts.
-            String fileName = artifactToAttach.getFile()
-                    .getName();
-            File destination = new File( new File( project.getBuild()
-                    .getDirectory() ), fileName );
-            try
-            {
-                FileUtils.copyFileIfModified( artifactToAttach.getFile(),
-                        destination );
-            }
-            catch ( IOException ioe )
-            {
-                throw new MojoExecutionException( "Could not copy file: "
-                                                  + fileName, ioe );
-            }
-            artifactToAttach.setFile( destination );
+            FileUtils.copyFileIfModified( artifactToAttach.getFile(),
+                    destination );
         }
+        catch ( IOException ioe )
+        {
+            throw new MojoExecutionException( "Could not copy file: "
+                                              + fileName, ioe );
+        }
+        artifactToAttach.setFile( destination );
+
         project.addAttachedArtifact( artifactToAttach );
         getLog().info( "Attached: " + artifactToAttach );
     }
