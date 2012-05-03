@@ -17,6 +17,12 @@
       <artifactId>commons-io</artifactId>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>org.neo4j.build.plugins</groupId>
+      <artifactId>docs-maven-plugin</artifactId>
+      <version>5</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

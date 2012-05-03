@@ -313,7 +313,7 @@ public class ThawMojo extends AbstractMojo
     }
 
     private Set<Artifact> getFilteredTransitiveDependencies(
-            ArtifactFilter filters ) throws MojoExecutionException
+            ArtifactFilter filter ) throws MojoExecutionException
     {
         HashSet<Artifact> artifacts = new HashSet<Artifact>();
         DependencyNode rootNode = null;
@@ -321,7 +321,7 @@ public class ThawMojo extends AbstractMojo
         {
             rootNode = treeBuilder.buildDependencyTree( project,
                     localRepository, artifactFactory, artifactMetadataSource,
-                    filters, artifactCollector );
+                    null, artifactCollector );
         }
         catch ( DependencyTreeBuilderException dtbe )
         {
@@ -337,7 +337,8 @@ public class ThawMojo extends AbstractMojo
         for ( DependencyNode dependencyNode : nodes )
         {
             int state = dependencyNode.getState();
-            if ( state == DependencyNode.INCLUDED )
+            if ( state == DependencyNode.INCLUDED
+                 && filter.include( dependencyNode.getArtifact() ) )
             {
                 artifacts.add( dependencyNode.getArtifact() );
             }
