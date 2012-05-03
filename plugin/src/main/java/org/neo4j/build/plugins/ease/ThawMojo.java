@@ -38,6 +38,8 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectHelper;
+import org.apache.maven.repository.DelegatingLocalArtifactRepository;
+import org.apache.maven.repository.LocalArtifactRepository;
 import org.apache.maven.shared.artifact.filter.StrictPatternExcludesArtifactFilter;
 import org.apache.maven.shared.artifact.filter.StrictPatternIncludesArtifactFilter;
 import org.apache.maven.shared.dependency.tree.DependencyNode;
@@ -144,7 +146,28 @@ public class ThawMojo extends AbstractMojo
         project.getAttachedArtifacts()
                 .clear();
 
+        DelegatingLocalArtifactRepository delegatingRepo = new DelegatingLocalArtifactRepository(
+                localRepository );
         ArtifactRepository dependencyRepo = null;
+        if ( thawDependencyRepositoryLocation != null )
+        {
+            LocalArtifactRepository thawDependencyRepository = new LocalArtifactRepository()
+            {
+                @Override
+                public Artifact find( Artifact artifact )
+                {
+                    return null;
+                }
+
+                @Override
+                public boolean hasLocalMetadata()
+                {
+                    // TODO Auto-generated method stub
+                    return false;
+                }
+            };
+            delegatingRepo.setIdeWorkspace( thawDependencyRepository );
+        }
         if ( thawDependencyRepositoryLocation == null )
         {
             dependencyRepo = localRepository;
@@ -228,7 +251,7 @@ public class ThawMojo extends AbstractMojo
                                               + findArtifact );
         }
         Artifact artifactToAttach = localRepository.find( findArtifact );
-        if ( "pom".equals( artifactToAttach.getType() ) )
+        if ( "pom".equals( artifactToAttach.getType() ) || true )
         {
             // point to a copy of the pom, otherwise it gets
             // corrupted as target and source are the same.
@@ -242,9 +265,10 @@ public class ThawMojo extends AbstractMojo
                 FileUtils.copyFileIfModified( artifactToAttach.getFile(),
                         destination );
             }
-            catch ( IOException e )
+            catch ( IOException ioe )
             {
-                e.printStackTrace();
+                throw new MojoExecutionException( "Could not copy file: "
+                                                  + fileName, ioe );
             }
             artifactToAttach.setFile( destination );
         }
