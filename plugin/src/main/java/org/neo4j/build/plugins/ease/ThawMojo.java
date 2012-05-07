@@ -133,42 +133,30 @@ public class ThawMojo extends AbstractMojo
      */
     private ArtifactCollector artifactCollector;
 
-    /**
-     * Lock down deoendency traversal to this repo.
-     */
-    private ArtifactRepository thawRepository = null;
-
     @Override
     public void execute() throws MojoExecutionException
     {
-        project.getAttachedArtifacts()
-                .clear();
-
-        thawRepository = new ThawRepository( "file:///home/anders/repo" );
+        project.getAttachedArtifacts().clear();
 
         for ( Artifact dependency : getDependencies() )
         {
-            Artifact findArtifactsArtifact = artifactFactory.createArtifactWithClassifier(
-                    dependency.getGroupId(), dependency.getArtifactId(),
-                    dependency.getVersion(), "txt", "artifacts" );
+            Artifact findArtifactsArtifact = artifactFactory.createArtifactWithClassifier( dependency.getGroupId(),
+                    dependency.getArtifactId(), dependency.getVersion(), "txt", "artifacts" );
             Artifact artifactsArtifact = localRepository.find( findArtifactsArtifact );
             File artifactsFile = artifactsArtifact.getFile();
             if ( !artifactsFile.exists() )
             {
-                throw new MojoExecutionException(
-                        "Could not find an artifact list for: " + dependency );
+                throw new MojoExecutionException( "Could not find an artifact list for: " + dependency );
             }
 
             String[] lines = null;
             try
             {
-                lines = FileUtils.fileRead( artifactsFile, "UTF-8" )
-                        .split( "\n" );
+                lines = FileUtils.fileRead( artifactsFile, "UTF-8" ).split( "\n" );
             }
             catch ( IOException ioe )
             {
-                throw new MojoExecutionException(
-                        "Could not read artifact list for: " + dependency, ioe );
+                throw new MojoExecutionException( "Could not read artifact list for: " + dependency, ioe );
             }
             boolean pomWasAttached = false;
             for ( String artifactString : lines )
@@ -182,45 +170,36 @@ public class ThawMojo extends AbstractMojo
             }
             if ( !pomWasAttached )
             {
-                findAndAttachExternalArtifact( dependency.getGroupId(),
-                        dependency.getArtifactId(), dependency.getVersion(),
-                        "pom", null );
+                findAndAttachExternalArtifact( dependency.getGroupId(), dependency.getArtifactId(),
+                        dependency.getVersion(), "pom", null );
             }
         }
     }
 
-    private void findAndAttachExternalArtifact( String groupId,
-            String artifactId, String version, String type, String classifier )
-            throws MojoExecutionException
+    private void findAndAttachExternalArtifact( String groupId, String artifactId, String version, String type,
+            String classifier ) throws MojoExecutionException
     {
-        Artifact findArtifact = createArtifact( groupId, artifactId, version,
-                type, classifier );
+        Artifact findArtifact = createArtifact( groupId, artifactId, version, type, classifier );
         findAndAttachExternalArtifact( findArtifact );
     }
 
-    private void findAndAttachExternalArtifact( Artifact findArtifact )
-            throws MojoExecutionException
+    private void findAndAttachExternalArtifact( Artifact findArtifact ) throws MojoExecutionException
     {
         if ( findArtifact == null )
         {
-            throw new MojoExecutionException( "Could not find artifact: "
-                                              + findArtifact );
+            throw new MojoExecutionException( "Could not find artifact: " + findArtifact );
         }
         Artifact artifactToAttach = localRepository.find( findArtifact );
 
-        String fileName = artifactToAttach.getFile()
-                .getName();
-        File destination = new File( new File( project.getBuild()
-                .getDirectory() ), fileName );
+        String fileName = artifactToAttach.getFile().getName();
+        File destination = new File( new File( project.getBuild().getDirectory() ), fileName );
         try
         {
-            FileUtils.copyFileIfModified( artifactToAttach.getFile(),
-                    destination );
+            FileUtils.copyFileIfModified( artifactToAttach.getFile(), destination );
         }
         catch ( IOException ioe )
         {
-            throw new MojoExecutionException( "Could not copy file: "
-                                              + fileName, ioe );
+            throw new MojoExecutionException( "Could not copy file: " + fileName, ioe );
         }
         artifactToAttach.setFile( destination );
 
@@ -228,21 +207,17 @@ public class ThawMojo extends AbstractMojo
         getLog().info( "Attached: " + artifactToAttach );
     }
 
-    private Artifact createArtifact( String groupId, String artifactId,
-            String version, String type, String classifier )
+    private Artifact createArtifact( String groupId, String artifactId, String version, String type, String classifier )
     {
-        return artifactFactory.createArtifactWithClassifier( groupId,
-                artifactId, version, type, classifier );
+        return artifactFactory.createArtifactWithClassifier( groupId, artifactId, version, type, classifier );
     }
 
-    private Artifact createArtifact( String coords )
-            throws MojoExecutionException
+    private Artifact createArtifact( String coords ) throws MojoExecutionException
     {
         String[] strings = coords.split( ":" );
         if ( strings.length < 4 || strings.length > 5 )
         {
-            throw new MojoExecutionException( "Can not parse coordinates: "
-                                              + coords );
+            throw new MojoExecutionException( "Can not parse coordinates: " + coords );
         }
         String groupId = strings[0];
         String artifactId = strings[1];
@@ -288,29 +263,26 @@ public class ThawMojo extends AbstractMojo
         return artifacts;
     }
 
-    private Set<Artifact> getFilteredTransitiveDependencies(
-            ArtifactFilter filter ) throws MojoExecutionException
+    private Set<Artifact> getFilteredTransitiveDependencies( ArtifactFilter filter ) throws MojoExecutionException
     {
         HashSet<Artifact> artifacts = new HashSet<Artifact>();
         DependencyNode rootNode = null;
         try
         {
-            rootNode = treeBuilder.buildDependencyTree( project,
-                    localRepository, artifactFactory, artifactMetadataSource,
-                    null, artifactCollector );
+            rootNode = treeBuilder.buildDependencyTree( project, localRepository, artifactFactory,
+                    artifactMetadataSource, null, artifactCollector );
         }
         catch ( DependencyTreeBuilderException dtbe )
         {
-            throw new MojoExecutionException(
-                    "Failed to traverse dependencies.", dtbe );
+            throw new MojoExecutionException( "Failed to traverse dependencies.", dtbe );
         }
 
         CollectingDependencyNodeVisitor visitor = new CollectingDependencyNodeVisitor();
 
         if ( filterEarly )
         {
-            FilteringDependencyNodeVisitor filteringVisitor = new FilteringDependencyNodeVisitor(
-                    visitor, new ArtifactDependencyNodeFilter( filter ) );
+            FilteringDependencyNodeVisitor filteringVisitor = new FilteringDependencyNodeVisitor( visitor,
+                    new ArtifactDependencyNodeFilter( filter ) );
 
             rootNode.accept( filteringVisitor );
         }
@@ -323,8 +295,7 @@ public class ThawMojo extends AbstractMojo
         for ( DependencyNode dependencyNode : nodes )
         {
             int state = dependencyNode.getState();
-            if ( state == DependencyNode.INCLUDED
-                 && filter.include( dependencyNode.getArtifact() ) )
+            if ( state == DependencyNode.INCLUDED && filter.include( dependencyNode.getArtifact() ) )
             {
                 artifacts.add( dependencyNode.getArtifact() );
             }
