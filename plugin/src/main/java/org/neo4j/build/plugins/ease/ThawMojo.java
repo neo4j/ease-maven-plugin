@@ -133,11 +133,18 @@ public class ThawMojo extends AbstractMojo
      */
     private ArtifactCollector artifactCollector;
 
+    /**
+     * Lock down deoendency traversal to this repo.
+     */
+    private ArtifactRepository thawRepository = null;
+
     @Override
     public void execute() throws MojoExecutionException
     {
         project.getAttachedArtifacts()
                 .clear();
+
+        thawRepository = new ThawRepository( "file:///home/anders/repo" );
 
         for ( Artifact dependency : getDependencies() )
         {
