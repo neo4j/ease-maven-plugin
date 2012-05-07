@@ -71,15 +71,20 @@ public class FreezeMojo extends AbstractMojo
             Artifact attached = (Artifact) i.next();
             addArtifactCoordinates( builder, attached );
         }
-        String destFile = project.getBuild()
-                .getDirectory() + File.separator + project.getArtifactId()
+        String buildDir = project.getBuild()
+                .getDirectory();
+        String destFile = buildDir + File.separator + project.getArtifactId()
                           + "-" + project.getVersion() + "-artifacts.txt";
-        if ( FileUtils.fileExists( destFile ) )
-        {
-            FileUtils.fileDelete( destFile );
-        }
         try
         {
+            if ( FileUtils.fileExists( destFile ) )
+            {
+                FileUtils.fileDelete( destFile );
+            }
+            if ( !FileUtils.fileExists( buildDir ) )
+            {
+                FileUtils.mkdir( buildDir );
+            }
             FileUtils.fileWrite( destFile, "UTF-8", builder.toString() );
         }
         catch ( IOException ioe )
@@ -98,16 +103,24 @@ public class FreezeMojo extends AbstractMojo
         builder.append( attached.getGroupId() )
                 .append( ':' )
                 .append( attached.getArtifactId() )
-                .append( ':' )
-                .append( FileUtils.extension( attached.getFile()
-                        .getName() ) )
                 .append( ':' );
+        // workaround for missing artifact files in pom projects
+        if ( "pom".equals( attached.getType() ) )
+        {
+            builder.append( "pom" );
+        }
+        else
+        {
+            builder.append( FileUtils.extension( attached.getFile()
+                    .getName() ) );
+        }
+        builder.append( ':' );
         if ( attached.hasClassifier() )
         {
             builder.append( attached.getClassifier() )
                     .append( ':' );
         }
-        builder.append( attached.getVersion() )
-                .append( '\n' );
+        builder.append( attached.getVersion() );
+        builder.append( '\n' );
     }
 }

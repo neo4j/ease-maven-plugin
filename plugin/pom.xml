@@ -273,47 +273,6 @@
     </pluginManagement>
   </build>
 
-  <profiles>
-    <profile>
-      <id>enable-ease-plugin-dogfooding</id>
-      <activation>
-        <activeByDefault>false</activeByDefault>
-        <property>
-          <name>dogfood</name>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <artifactId>ease-maven-plugin</artifactId>
-            <groupId>org.neo4j.build.plugins</groupId>
-            <version>${project.version}</version>
-            <executions>
-              <execution>
-                <id>thaw-artifacts</id>
-                <goals>
-                  <goal>thaw</goal>
-                </goals>
-                <configuration>
-                  <includes>
-                    <include>org.neo4j</include>
-                  </includes>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-      <dependencies>
-        <dependency>
-          <artifactId>neo4j-kernel</artifactId>
-          <groupId>org.neo4j</groupId>
-          <version>1.8-SNAPSHOT</version>
-        </dependency>
-      </dependencies>
-    </profile>
-  </profiles>
-
   <distributionManagement>
     <site>
       <id>neo4j-site</id>

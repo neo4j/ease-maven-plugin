@@ -35,13 +35,14 @@ import org.apache.maven.artifact.resolver.filter.ArtifactFilter;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.MavenProjectHelper;
 import org.apache.maven.shared.artifact.filter.StrictPatternExcludesArtifactFilter;
 import org.apache.maven.shared.artifact.filter.StrictPatternIncludesArtifactFilter;
 import org.apache.maven.shared.dependency.tree.DependencyNode;
 import org.apache.maven.shared.dependency.tree.DependencyTreeBuilder;
 import org.apache.maven.shared.dependency.tree.DependencyTreeBuilderException;
+import org.apache.maven.shared.dependency.tree.filter.ArtifactDependencyNodeFilter;
 import org.apache.maven.shared.dependency.tree.traversal.CollectingDependencyNodeVisitor;
+import org.apache.maven.shared.dependency.tree.traversal.FilteringDependencyNodeVisitor;
 import org.codehaus.plexus.util.FileUtils;
 
 /**
@@ -71,11 +72,20 @@ public class ThawMojo extends AbstractMojo
     protected List<String> excludes;
 
     /**
-     * If we should exclude transitive dependencies
+     * If we should exclude transitive dependencies.
      * 
      * @parameter expression="${excludeTransitive}" default-value="false"
      */
     protected boolean excludeTransitive;
+
+    /**
+     * If we should filter the dependencies early. Enabling this stops resolving
+     * transitive dependencies along a branch as soon as an artifact gets
+     * filtered out.
+     * 
+     * @parameter expression="${filterEarly}" default-value="true"
+     */
+    protected boolean filterEarly;
 
     /**
      * @parameter default-value="${project}"
@@ -101,11 +111,6 @@ public class ThawMojo extends AbstractMojo
      * @required
      */
     protected ArtifactRepository localRepository;
-
-    /**
-     * @component
-     */
-    protected MavenProjectHelper projectHelper;
 
     /**
      * @component
@@ -295,7 +300,17 @@ public class ThawMojo extends AbstractMojo
 
         CollectingDependencyNodeVisitor visitor = new CollectingDependencyNodeVisitor();
 
-        rootNode.accept( visitor );
+        if ( filterEarly )
+        {
+            FilteringDependencyNodeVisitor filteringVisitor = new FilteringDependencyNodeVisitor(
+                    visitor, new ArtifactDependencyNodeFilter( filter ) );
+
+            rootNode.accept( filteringVisitor );
+        }
+        else
+        {
+            rootNode.accept( visitor );
+        }
 
         List<DependencyNode> nodes = visitor.getNodes();
         for ( DependencyNode dependencyNode : nodes )

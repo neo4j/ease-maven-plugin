@@ -6,24 +6,24 @@
     <version>1-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
-  <artifactId>ease-example-thaw</artifactId>
+  <artifactId>ease-example-thaw2</artifactId>
   <packaging>pom</packaging>
 
   <dependencies>
     <dependency>
-      <groupId>org.neo4j.build.plugins</groupId>
-      <artifactId>ease-example-freeze</artifactId>
-      <version>1-SNAPSHOT</version>
+      <groupId>org.neo4j.app</groupId>
+      <artifactId>neo4j-server</artifactId>
+      <version>1.8-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>org.neo4j.build.plugins</groupId>
-      <artifactId>ease-example-freeze3</artifactId>
-      <version>1-SNAPSHOT</version>
+      <groupId>org.neo4j.examples</groupId>
+      <artifactId>neo4j-examples</artifactId>
+      <version>1.8-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>org.neo4j.build.plugins</groupId>
-      <artifactId>ease-example-freeze4</artifactId>
-      <version>1-SNAPSHOT</version>
+      <groupId>org.neo4j.examples</groupId>
+      <artifactId>neo4j-server-examples</artifactId>
+      <version>1.8-SNAPSHOT</version>
     </dependency>
   </dependencies>
 
@@ -41,7 +41,9 @@
             </goals>
             <configuration>
               <includes>
-                <include>org.neo4j.build.plugins:*</include>
+                <include>org.neo4j:*</include>
+                <include>org.neo4j.app:*</include>
+                <include>org.neo4j.examples:*</include>
               </includes>
             </configuration>
           </execution>

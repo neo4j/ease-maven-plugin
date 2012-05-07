@@ -5,7 +5,7 @@
     <groupId>org.neo4j.build</groupId>
     <artifactId>grandparent</artifactId>
     <version>33</version>
-    <relativePath/>
+    <relativePath />
   </parent>
   <artifactId>ease-maven-plugin-parent</artifactId>
   <groupId>org.neo4j.build.plugins</groupId>
@@ -14,7 +14,7 @@
   <name>Neo4j Release Helper Parent</name>
   <url>http://components.neo4j.org/${project.artifactId}/${project.version}</url>
   <inceptionYear>2012</inceptionYear>
-  
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.build.timestamp.format>yyyy</maven.build.timestamp.format>
@@ -46,11 +46,27 @@
 
   <modules>
     <module>plugin</module>
-    <module>example-freeze</module>
-    <module>example-freeze2</module>
-    <module>example-freeze3</module>
-    <module>example-thaw</module>
   </modules>
+
+  <profiles>
+    <profile>
+      <id>test</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+        <property>
+          <name>tryit</name>
+        </property>
+      </activation>
+      <modules>
+        <module>plugin</module>
+        <module>example-freeze</module>
+        <module>example-freeze2</module>
+        <module>example-freeze3</module>
+        <module>example-freeze4</module>
+        <module>example-thaw</module>
+      </modules>
+    </profile>
+  </profiles>
 
   <distributionManagement>
     <site>

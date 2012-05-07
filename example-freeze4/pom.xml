@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+>
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>ease-maven-plugin-parent</artifactId>
+    <groupId>org.neo4j.build.plugins</groupId>
+    <version>1-SNAPSHOT</version>
+    <relativePath>..</relativePath>
+  </parent>
+  <artifactId>ease-example-freeze4</artifactId>
+  <packaging>pom</packaging>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>ease-maven-plugin</artifactId>
+        <groupId>org.neo4j.build.plugins</groupId>
+        <version>${project.version}</version>
+        <executions>
+          <execution>
+            <id>freeze-artifacts</id>
+            <goals>
+              <goal>freeze</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
+
