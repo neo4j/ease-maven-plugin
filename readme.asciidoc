@@ -1,13 +1,26 @@
 == Ease Maven Plugin ==
 
 This plugin lets you release Maven artifacts in a very controlled way.
+It doesn't replace `install` or `deploy` but modifies the project before these targets are executed.
 
-The plugin works by adding metadata to artifacts during the release build,
+=== Introduction ===
+
+The plugin works by adding simple metadata to artifacts during the release build,
 and then reading that data when deploying.
 Which means release build and deploy are fully separated.
+No building or dependency resolution happens during release, it's just deploying existing artifacts from a known filesytemm location.
 
-Use the `freeze` and `aggregate` goals while building a release.
-Use the `attach` goal when deploying the release.
+* The `freeze` and `aggregate` goals are used while building a release.
+* The `attach` goal is used when deploying a release.
+
+The `freeze` goal should be added to all projects included in the release.
+
+The `aggregate` goal is used in a separate project.
+This project should have everything that should go into the release as dependencies.
+As the `aggregate` goal attaches the resulting list to the project just like the `freeze` goal, it can be composed in multiple levels.
+
+The `attach` goal is used in a separate project.
+This project should only be concerned with where to find the artifact list and the artifacts, and how to deploy the artifacts.
 
 Add the plugin executions to the 'pom.xml' files.
 Then just use normal `install` or `deploy` goals to bring it to action.

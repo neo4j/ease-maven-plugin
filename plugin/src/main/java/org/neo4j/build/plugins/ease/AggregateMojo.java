@@ -1,21 +1,20 @@
 /**
- * Copyright (c) 2012-2012 "Neo Technology,"
- * Network Engine for Objects in Lund AB [http://neotechnology.com]
+ * Licensed to Neo Technology under one or more contributor
+ * license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright
+ * ownership. Neo Technology licenses this file to you under
+ * the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This file is part of Neo4j.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Neo4j is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.neo4j.build.plugins.ease;
 
@@ -24,8 +23,8 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
@@ -47,7 +46,15 @@ import org.apache.maven.shared.dependency.tree.traversal.CollectingDependencyNod
 import org.codehaus.plexus.util.FileUtils;
 
 /**
- * Goal which prepares artifacts for install or deploy.
+ * Aggregates multiple artifact lists into a single list and attaches it to the
+ * project.
+ * 
+ * The lists to aggregate are found by traversing the dependency tree of the
+ * project, and apply filters on the result. If no configuration is given, all
+ * dependencies (including transitive) will be included.
+ * 
+ * Note: Every included dependency must have an -artifacts.txt file, or the
+ * plugin will fail the build.
  * 
  * @goal aggregate
  * @phase verify
@@ -133,7 +140,7 @@ public class AggregateMojo extends AbstractMojo
     @Override
     public void execute() throws MojoExecutionException
     {
-        SortedMap<String, String> aggregate = new TreeMap<String, String>();
+        SortedSet<String> aggregate = new TreeSet<String>();
         for ( Artifact dependency : getDependencies() )
         {
             Artifact findArtifactsArtifact = artifactFactory.createArtifactWithClassifier(
@@ -157,12 +164,16 @@ public class AggregateMojo extends AbstractMojo
                 throw new MojoExecutionException(
                         "Could not read artifact list for: " + dependency, ioe );
             }
-            aggregate.put( dependency.getId(), artifactList );
+            for ( String line : artifactList.split( "\n" ) )
+            {
+                aggregate.add( line );
+            }
         }
-        StringBuilder builder = new StringBuilder( aggregate.size() * 512 );
-        for ( String artifactList : aggregate.values() )
+        StringBuilder builder = new StringBuilder( aggregate.size() * 64 );
+        for ( String artifactLine : aggregate )
         {
-            builder.append( artifactList );
+            builder.append( artifactLine )
+                    .append( '\n' );
         }
         EaseHelper.writeAndAttachArtifactList( builder, project, projectHelper,
                 getLog() );
