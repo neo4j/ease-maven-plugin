@@ -6,7 +6,7 @@
     <version>1-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
-  <artifactId>ease-example-thaw</artifactId>
+  <artifactId>ease-example-aggregate</artifactId>
   <packaging>pom</packaging>
 
   <dependencies>
@@ -36,9 +36,9 @@
         <version>${project.version}</version>
         <executions>
           <execution>
-            <id>thaw-artifacts</id>
+            <id>aggregate-artifacts</id>
             <goals>
-              <goal>thaw</goal>
+              <goal>aggregate</goal>
             </goals>
             <configuration>
               <includes>

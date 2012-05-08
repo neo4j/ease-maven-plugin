@@ -1,0 +1,33 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>ease-maven-plugin-parent</artifactId>
+    <groupId>org.neo4j.build.plugins</groupId>
+    <version>1-SNAPSHOT</version>
+    <relativePath>..</relativePath>
+  </parent>
+  <artifactId>ease-example-attach</artifactId>
+  <packaging>pom</packaging>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>ease-maven-plugin</artifactId>
+        <groupId>org.neo4j.build.plugins</groupId>
+        <version>${project.version}</version>
+        <executions>
+          <execution>
+            <id>attach-artifacts</id>
+            <goals>
+              <goal>attach</goal>
+            </goals>
+            <configuration>
+              <artifactListLocation>${basedir}/../example-aggregate/target/ease-example-aggregate-${project.version}-artifacts.txt</artifactListLocation>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

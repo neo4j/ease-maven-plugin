@@ -17,6 +17,13 @@
       <groupId>org.neo4j.build.plugins</groupId>
       <version>1-SNAPSHOT</version>
     </dependency>
+    <!-- check that scope=test doesn't get included -->
+    <dependency>
+      <artifactId>docs-maven-plugin</artifactId>
+      <groupId>org.neo4j.build.plugins</groupId>
+      <version>5</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

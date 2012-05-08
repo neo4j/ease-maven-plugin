@@ -19,8 +19,6 @@
  */
 package org.neo4j.build.plugins.ease;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -66,61 +64,49 @@ public class FreezeMojo extends AbstractMojo
         StringBuilder builder = new StringBuilder( 512 );
         Artifact artifact = project.getArtifact();
         addArtifactCoordinates( builder, artifact );
+        boolean pomWasAdded = "pom".equals( artifact.getType() );
         for ( Iterator i = attachedArtifacts.iterator(); i.hasNext(); )
         {
             Artifact attached = (Artifact) i.next();
             addArtifactCoordinates( builder, attached );
+            pomWasAdded = pomWasAdded || "pom".equals( artifact.getType() );
         }
-        String buildDir = project.getBuild()
-                .getDirectory();
-        String destFile = buildDir + File.separator + project.getArtifactId()
-                          + "-" + project.getVersion() + "-artifacts.txt";
-        try
+        if ( !pomWasAdded )
         {
-            if ( FileUtils.fileExists( destFile ) )
-            {
-                FileUtils.fileDelete( destFile );
-            }
-            if ( !FileUtils.fileExists( buildDir ) )
-            {
-                FileUtils.mkdir( buildDir );
-            }
-            FileUtils.fileWrite( destFile, "UTF-8", builder.toString() );
+            addArtifactCoordinates( builder, project.getGroupId(), project.getArtifactId(), "pom",
+                    project.getVersion(), null );
         }
-        catch ( IOException ioe )
-        {
-            throw new MojoExecutionException( "Could not write artifact list.",
-                    ioe );
-        }
-        projectHelper.attachArtifact( project, "txt", "artifacts",
-                FileUtils.getFile( destFile ) );
-        getLog().info( "Successfully attached artifact list to the project." );
+
+        EaseHelper.writeAndAttachArtifactList( builder, project, projectHelper, getLog() );
     }
 
-    private void addArtifactCoordinates( StringBuilder builder,
-            Artifact attached )
+    private void addArtifactCoordinates( StringBuilder builder, Artifact attached )
     {
-        builder.append( attached.getGroupId() )
-                .append( ':' )
-                .append( attached.getArtifactId() )
-                .append( ':' );
+        String groupId = attached.getGroupId();
+        String artifactId = attached.getArtifactId();
         // workaround for missing artifact files in pom projects
-        if ( "pom".equals( attached.getType() ) )
+        String type = "pom";
+        if ( !"pom".equals( attached.getType() ) )
         {
-            builder.append( "pom" );
+            type = FileUtils.extension( attached.getFile().getName() );
         }
-        else
-        {
-            builder.append( FileUtils.extension( attached.getFile()
-                    .getName() ) );
-        }
-        builder.append( ':' );
+        String version = attached.getVersion();
+        String classifier = null;
         if ( attached.hasClassifier() )
         {
-            builder.append( attached.getClassifier() )
-                    .append( ':' );
+            classifier = attached.getClassifier();
         }
-        builder.append( attached.getVersion() );
-        builder.append( '\n' );
+        addArtifactCoordinates( builder, groupId, artifactId, type, version, classifier );
+    }
+
+    private void addArtifactCoordinates( StringBuilder builder, String groupId, String artifactId, String type,
+            String version, String classifier )
+    {
+        builder.append( groupId ).append( ':' ).append( artifactId ).append( ':' ).append( type ).append( ':' );
+        if ( classifier != null )
+        {
+            builder.append( classifier ).append( ':' );
+        }
+        builder.append( version ).append( '\n' );
     }
 }

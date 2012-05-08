@@ -10,8 +10,8 @@
   <groupId>org.neo4j.build.plugins</groupId>
   <packaging>maven-plugin</packaging>
   <version>1-SNAPSHOT</version>
-  <name>Neo4j Release Helper</name>
-  <description>Tool to deploy projects from their installed jar files.</description>
+  <name>Ease Maven Plugin</name>
+  <description>Tool to deploy projects from their installed jar files, using some metadata magic.</description>
   <url>http://components.neo4j.org/${project.artifactId}/${project.version}</url>
   <inceptionYear>2012</inceptionYear>
 

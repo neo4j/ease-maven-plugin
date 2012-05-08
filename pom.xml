@@ -11,7 +11,7 @@
   <groupId>org.neo4j.build.plugins</groupId>
   <packaging>pom</packaging>
   <version>1-SNAPSHOT</version>
-  <name>Neo4j Release Helper Parent</name>
+  <name>Ease Maven Plugin Parent</name>
   <url>http://components.neo4j.org/${project.artifactId}/${project.version}</url>
   <inceptionYear>2012</inceptionYear>
 
@@ -32,7 +32,6 @@
     <url>https://github.com/neo4j/ease-maven-plugin</url>
   </scm>
 
-
   <issueManagement>
     <url>https://github.com/neo4j/ease-maven-plugin</url>
   </issueManagement>
@@ -44,17 +43,25 @@
     </license>
   </licenses>
 
-  <modules>
-    <module>plugin</module>
-  </modules>
-
   <profiles>
     <profile>
-      <id>test</id>
+      <id>normal-build</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+        <property>
+          <name>!perform</name>
+        </property>
+      </activation>
+      <modules>
+        <module>plugin</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>prepare</id>
       <activation>
         <activeByDefault>false</activeByDefault>
         <property>
-          <name>tryit</name>
+          <name>prepare</name>
         </property>
       </activation>
       <modules>
@@ -63,7 +70,19 @@
         <module>example-freeze2</module>
         <module>example-freeze3</module>
         <module>example-freeze4</module>
-        <module>example-thaw</module>
+        <module>example-aggregate</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>perform</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+        <property>
+          <name>perform</name>
+        </property>
+      </activation>
+      <modules>
+        <module>example-attach</module>
       </modules>
     </profile>
   </profiles>
