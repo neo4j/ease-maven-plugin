@@ -1,21 +1,20 @@
 /**
- * Copyright (c) 2012-2012 "Neo Technology,"
- * Network Engine for Objects in Lund AB [http://neotechnology.com]
+ * Licensed to Neo Technology under one or more contributor
+ * license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright
+ * ownership. Neo Technology licenses this file to you under
+ * the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This file is part of Neo4j.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Neo4j is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.neo4j.build.plugins.ease;
 
@@ -49,7 +48,6 @@ public class AttachMojo extends AbstractMojo
      * 
      * @parameter expression="${artifactListLocation}"
      * @required
-     * @readonly
      */
     private String artifactListLocation;
 
@@ -59,7 +57,6 @@ public class AttachMojo extends AbstractMojo
      * local repository.
      * 
      * @parameter expression="${artifactRepositoryLocation}"
-     * @readonly
      */
     private String artifactRepositoryLocation;
 
@@ -112,51 +109,8 @@ public class AttachMojo extends AbstractMojo
                             + artifactListLocation );
         }
 
-        if ( artifactRepositoryLocation != null )
-        {
-            String url;
-            File artifactRepositoryDirectory = FileUtils.getFile( artifactRepositoryLocation );
-            try
-            {
-                url = artifactRepositoryDirectory.toURI()
-                        .toURL()
-                        .toExternalForm();
-            }
-            catch ( MalformedURLException mue )
-            {
-                throw new MojoExecutionException(
-                        "Could not parse repository location: "
-                                + artifactRepositoryLocation, mue );
-            }
-
-            if ( !artifactRepositoryDirectory.exists() )
-            {
-                throw new MojoExecutionException(
-                        "The repository location does not exist: "
-                                + artifactRepositoryLocation );
-            }
-
-            String id = "ease-source-repo";
-            DefaultRepositoryLayout layout = new DefaultRepositoryLayout();
-            ArtifactRepositoryPolicy snapshotsPolicy = new ArtifactRepositoryPolicy(
-                    false, ArtifactRepositoryPolicy.UPDATE_POLICY_NEVER,
-                    ArtifactRepositoryPolicy.CHECKSUM_POLICY_FAIL );
-            ArtifactRepositoryPolicy releasesPolicy = new ArtifactRepositoryPolicy(
-                    true, ArtifactRepositoryPolicy.UPDATE_POLICY_NEVER,
-                    ArtifactRepositoryPolicy.CHECKSUM_POLICY_FAIL );
-            artifactRepository = new MavenArtifactRepository( id, url, layout,
-                    snapshotsPolicy, releasesPolicy );
-            if ( artifactRepository.getBasedir()
-                    .equals( localRepository.getBasedir() ) )
-            {
-                throw new MojoExecutionException(
-                        "It is not allowed to point artifactRepositoryLocation to the location of the local repository." );
-            }
-        }
-        else
-        {
-            artifactRepository = localRepository;
-        }
+        artifactRepository = setupArtifactRepository( localRepository,
+                artifactRepositoryLocation );
 
         getLog().info(
                 "Loading artifacts from repository at: "
@@ -172,6 +126,58 @@ public class AttachMojo extends AbstractMojo
                                 + artifactString );
             }
             findAndAttachExternalArtifact( findArtifact, artifactRepository );
+        }
+    }
+
+    private static ArtifactRepository setupArtifactRepository(
+            ArtifactRepository localRepo, String separateRepoLocation )
+            throws MojoExecutionException
+    {
+        if ( separateRepoLocation != null )
+        {
+            String url;
+            File artifactRepositoryDirectory = FileUtils.getFile( separateRepoLocation );
+            try
+            {
+                url = artifactRepositoryDirectory.toURI()
+                        .toURL()
+                        .toExternalForm();
+            }
+            catch ( MalformedURLException mue )
+            {
+                throw new MojoExecutionException(
+                        "Could not parse repository location: "
+                                + separateRepoLocation, mue );
+            }
+
+            if ( !artifactRepositoryDirectory.exists() )
+            {
+                throw new MojoExecutionException(
+                        "The repository location does not exist: "
+                                + separateRepoLocation );
+            }
+
+            String id = "ease-source-repo";
+            DefaultRepositoryLayout layout = new DefaultRepositoryLayout();
+            ArtifactRepositoryPolicy snapshotsPolicy = new ArtifactRepositoryPolicy(
+                    false, ArtifactRepositoryPolicy.UPDATE_POLICY_NEVER,
+                    ArtifactRepositoryPolicy.CHECKSUM_POLICY_FAIL );
+            ArtifactRepositoryPolicy releasesPolicy = new ArtifactRepositoryPolicy(
+                    true, ArtifactRepositoryPolicy.UPDATE_POLICY_NEVER,
+                    ArtifactRepositoryPolicy.CHECKSUM_POLICY_FAIL );
+            ArtifactRepository separateArtifactRepository = new MavenArtifactRepository(
+                    id, url, layout, snapshotsPolicy, releasesPolicy );
+            if ( separateArtifactRepository.getBasedir()
+                    .equals( localRepo.getBasedir() ) )
+            {
+                throw new MojoExecutionException(
+                        "It is not allowed to point artifactRepositoryLocation to the location of the local repository." );
+            }
+            return separateArtifactRepository;
+        }
+        else
+        {
+            return localRepo;
         }
     }
 
