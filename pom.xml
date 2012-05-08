@@ -24,7 +24,7 @@
     <skinArtifactId>default-skin</skinArtifactId>
     <skinVersion>4</skinVersion>
     <licensesVersion>7</licensesVersion>
-    <license-text.header>AGPL-3-header.txt</license-text.header>
+    <license-text.header>ApacheLicense-2.0-header.txt</license-text.header>
   </properties>
 
   <scm>
@@ -39,8 +39,8 @@
 
   <licenses>
     <license>
-      <name>GNU Affero General Public License, Version 3</name>
-      <url>http://www.gnu.org/licenses/agpl-3.0-standalone.html</url>
+      <name>Apache License Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
     </license>
   </licenses>
 
