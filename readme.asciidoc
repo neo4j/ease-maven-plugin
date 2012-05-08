@@ -3,20 +3,20 @@
 This plugin lets you release Maven artifacts in a very controlled way.
 
 The plugin works by adding metadata to artifacts during the release build,
-and then reading the data when deploying.
+and then reading that data when deploying.
 Which means release build and deploy are fully separated.
 
 Use the `freeze` and `aggregate` goals while building a release.
-Use `attach` goal when deploying the release.
+Use the `attach` goal when deploying the release.
 
-Add the plugin executions to the pom.xml files.
+Add the plugin executions to the 'pom.xml' files.
 Then just use normal `install` or `deploy` goals to bring it to action.
 
 === Goals ===
 
 * `freeze`: Lists the artifacts (like the default jar, the sources jar etc.) atttached to a project and attaches the list to the project, as a -artifacts.txt artifact.
-* `aggregate`: Traverses the dependencies of a project and aggragates artifacts.txt files into one single list, which is then attached to the project. Note that any missing artifacts.txt file will fail the build -- use includes/excludes filtering to target the dependencies you want.
-* `attach`: Attaches all artifacts in a given artifacts.txt file to the project. A file location for this file is used to prevent any dependency resolution whatsoever to take place.
+* `aggregate`: Traverses the dependencies of a project and aggragates artifacts.txt files into one single list, which is then attached to the project. Note that _any_ missing artifacts.txt file will fail the build -- use includes/excludes filtering to target the dependencies you want.
+* `attach`: Attaches all artifacts in a given artifacts.txt file to the project. A file location for this file is used to prevent any dependency resolution whatsoever to take place. A separate local repo can be defined for loading the artifacts from, which is very much recommended.
 
 === Use the included test/example projects ===
 

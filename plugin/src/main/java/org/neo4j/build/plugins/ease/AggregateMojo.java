@@ -136,13 +136,15 @@ public class AggregateMojo extends AbstractMojo
         SortedMap<String, String> aggregate = new TreeMap<String, String>();
         for ( Artifact dependency : getDependencies() )
         {
-            Artifact findArtifactsArtifact = artifactFactory.createArtifactWithClassifier( dependency.getGroupId(),
-                    dependency.getArtifactId(), dependency.getVersion(), "txt", "artifacts" );
+            Artifact findArtifactsArtifact = artifactFactory.createArtifactWithClassifier(
+                    dependency.getGroupId(), dependency.getArtifactId(),
+                    dependency.getVersion(), "txt", "artifacts" );
             Artifact artifactsArtifact = localRepository.find( findArtifactsArtifact );
             File artifactsFile = artifactsArtifact.getFile();
             if ( !artifactsFile.exists() )
             {
-                throw new MojoExecutionException( "Could not find an artifact list for: " + dependency );
+                throw new MojoExecutionException(
+                        "Could not find an artifact list for: " + dependency );
             }
 
             String artifactList = null;
@@ -152,7 +154,8 @@ public class AggregateMojo extends AbstractMojo
             }
             catch ( IOException ioe )
             {
-                throw new MojoExecutionException( "Could not read artifact list for: " + dependency, ioe );
+                throw new MojoExecutionException(
+                        "Could not read artifact list for: " + dependency, ioe );
             }
             aggregate.put( dependency.getId(), artifactList );
         }
@@ -161,7 +164,8 @@ public class AggregateMojo extends AbstractMojo
         {
             builder.append( artifactList );
         }
-        EaseHelper.writeAndAttachArtifactList( builder, project, projectHelper, getLog() );
+        EaseHelper.writeAndAttachArtifactList( builder, project, projectHelper,
+                getLog() );
     }
 
     private Set<Artifact> getDependencies() throws MojoExecutionException
@@ -191,18 +195,21 @@ public class AggregateMojo extends AbstractMojo
         return artifacts;
     }
 
-    private Set<Artifact> getFilteredTransitiveDependencies( ArtifactFilter filter ) throws MojoExecutionException
+    private Set<Artifact> getFilteredTransitiveDependencies(
+            ArtifactFilter filter ) throws MojoExecutionException
     {
         HashSet<Artifact> artifacts = new HashSet<Artifact>();
         DependencyNode rootNode = null;
         try
         {
-            rootNode = treeBuilder.buildDependencyTree( project, localRepository, artifactFactory,
-                    artifactMetadataSource, null, artifactCollector );
+            rootNode = treeBuilder.buildDependencyTree( project,
+                    localRepository, artifactFactory, artifactMetadataSource,
+                    null, artifactCollector );
         }
         catch ( DependencyTreeBuilderException dtbe )
         {
-            throw new MojoExecutionException( "Failed to traverse dependencies.", dtbe );
+            throw new MojoExecutionException(
+                    "Failed to traverse dependencies.", dtbe );
         }
 
         CollectingDependencyNodeVisitor visitor = new CollectingDependencyNodeVisitor();
@@ -220,7 +227,8 @@ public class AggregateMojo extends AbstractMojo
         for ( DependencyNode dependencyNode : nodes )
         {
             int state = dependencyNode.getState();
-            if ( state == DependencyNode.INCLUDED && filter.include( dependencyNode.getArtifact() ) )
+            if ( state == DependencyNode.INCLUDED
+                 && filter.include( dependencyNode.getArtifact() ) )
             {
                 artifacts.add( dependencyNode.getArtifact() );
             }

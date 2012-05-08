@@ -45,6 +45,8 @@ import org.codehaus.plexus.util.FileUtils;
 public class AttachMojo extends AbstractMojo
 {
     /**
+     * File system location of artifact list.
+     * 
      * @parameter expression="${artifactListLocation}"
      * @required
      * @readonly
@@ -52,6 +54,10 @@ public class AttachMojo extends AbstractMojo
     private String artifactListLocation;
 
     /**
+     * File system location of artifact repository to fetch artifacts from. It
+     * is not allowed to point artifactRepositoryLocation to the location of the
+     * local repository.
+     * 
      * @parameter expression="${artifactRepositoryLocation}"
      * @readonly
      */
@@ -82,21 +88,28 @@ public class AttachMojo extends AbstractMojo
      */
     protected ArtifactRepository localRepository;
 
+    /**
+     * Is either the local repo or a separate artifact repo in the file system.
+     */
     private ArtifactRepository artifactRepository = null;
 
     @Override
     public void execute() throws MojoExecutionException
     {
-        project.getAttachedArtifacts().clear();
+        project.getAttachedArtifacts()
+                .clear();
 
         String[] lines = null;
         try
         {
-            lines = FileUtils.fileRead( artifactListLocation, "UTF-8" ).split( "\n" );
+            lines = FileUtils.fileRead( artifactListLocation, "UTF-8" )
+                    .split( "\n" );
         }
         catch ( IOException ioe )
         {
-            throw new MojoExecutionException( "Could not read artifact list from: " + artifactListLocation );
+            throw new MojoExecutionException(
+                    "Could not read artifact list from: "
+                            + artifactListLocation );
         }
 
         if ( artifactRepositoryLocation != null )
@@ -105,80 +118,112 @@ public class AttachMojo extends AbstractMojo
             File artifactRepositoryDirectory = FileUtils.getFile( artifactRepositoryLocation );
             try
             {
-                url = artifactRepositoryDirectory.toURI().toURL().toExternalForm();
+                url = artifactRepositoryDirectory.toURI()
+                        .toURL()
+                        .toExternalForm();
             }
             catch ( MalformedURLException mue )
             {
-                throw new MojoExecutionException( "Could not parse repository location: " + artifactRepositoryLocation,
-                        mue );
+                throw new MojoExecutionException(
+                        "Could not parse repository location: "
+                                + artifactRepositoryLocation, mue );
             }
 
             if ( !artifactRepositoryDirectory.exists() )
             {
-                throw new MojoExecutionException( "The repository location does not exist: "
-                                                  + artifactRepositoryLocation );
+                throw new MojoExecutionException(
+                        "The repository location does not exist: "
+                                + artifactRepositoryLocation );
             }
 
             String id = "ease-source-repo";
             DefaultRepositoryLayout layout = new DefaultRepositoryLayout();
-            ArtifactRepositoryPolicy snapshotsPolicy = new ArtifactRepositoryPolicy( false,
-                    ArtifactRepositoryPolicy.UPDATE_POLICY_NEVER, ArtifactRepositoryPolicy.CHECKSUM_POLICY_FAIL );
-            ArtifactRepositoryPolicy releasesPolicy = new ArtifactRepositoryPolicy( true,
-                    ArtifactRepositoryPolicy.UPDATE_POLICY_NEVER, ArtifactRepositoryPolicy.CHECKSUM_POLICY_FAIL );
-            artifactRepository = new MavenArtifactRepository( id, url, layout, snapshotsPolicy, releasesPolicy );
+            ArtifactRepositoryPolicy snapshotsPolicy = new ArtifactRepositoryPolicy(
+                    false, ArtifactRepositoryPolicy.UPDATE_POLICY_NEVER,
+                    ArtifactRepositoryPolicy.CHECKSUM_POLICY_FAIL );
+            ArtifactRepositoryPolicy releasesPolicy = new ArtifactRepositoryPolicy(
+                    true, ArtifactRepositoryPolicy.UPDATE_POLICY_NEVER,
+                    ArtifactRepositoryPolicy.CHECKSUM_POLICY_FAIL );
+            artifactRepository = new MavenArtifactRepository( id, url, layout,
+                    snapshotsPolicy, releasesPolicy );
+            if ( artifactRepository.getBasedir()
+                    .equals( localRepository.getBasedir() ) )
+            {
+                throw new MojoExecutionException(
+                        "It is not allowed to point artifactRepositoryLocation to the location of the local repository." );
+            }
         }
         else
         {
             artifactRepository = localRepository;
         }
 
+        getLog().info(
+                "Loading artifacts from repository at: "
+                        + artifactRepository.getBasedir() );
+
         for ( String artifactString : lines )
         {
             Artifact findArtifact = createArtifact( artifactString );
             if ( findArtifact == null )
             {
-                throw new MojoExecutionException( "Could not create artifact from coordinates: " + artifactString );
+                throw new MojoExecutionException(
+                        "Could not create artifact from coordinates: "
+                                + artifactString );
             }
             findAndAttachExternalArtifact( findArtifact, artifactRepository );
         }
     }
 
-    private void findAndAttachExternalArtifact( Artifact findArtifact, ArtifactRepository repository )
-            throws MojoExecutionException
+    private void findAndAttachExternalArtifact( Artifact findArtifact,
+            ArtifactRepository repository ) throws MojoExecutionException
     {
         Artifact artifactToAttach = repository.find( findArtifact );
-        if ( !artifactToAttach.getFile().exists() )
+        if ( !artifactToAttach.getFile()
+                .exists() )
         {
-            throw new MojoExecutionException( "Missing artifact file: " + findArtifact.getFile() );
+            throw new MojoExecutionException( "Missing artifact file: "
+                                              + findArtifact.getFile() );
         }
 
-        String fileName = artifactToAttach.getFile().getName();
-        File destination = new File( new File( project.getBuild().getDirectory() ), fileName );
-        try
+        if ( repository == localRepository )
         {
-            FileUtils.copyFileIfModified( artifactToAttach.getFile(), destination );
+            String fileName = artifactToAttach.getFile()
+                    .getName();
+            File destination = new File( new File( project.getBuild()
+                    .getDirectory() ), fileName );
+            try
+            {
+                FileUtils.copyFileIfModified( artifactToAttach.getFile(),
+                        destination );
+            }
+            catch ( IOException ioe )
+            {
+                throw new MojoExecutionException( "Could not copy file: "
+                                                  + fileName, ioe );
+            }
+            artifactToAttach.setFile( destination );
         }
-        catch ( IOException ioe )
-        {
-            throw new MojoExecutionException( "Could not copy file: " + fileName, ioe );
-        }
-        artifactToAttach.setFile( destination );
 
         project.addAttachedArtifact( artifactToAttach );
         getLog().info( "Attached: " + artifactToAttach );
     }
 
-    private Artifact createArtifact( String groupId, String artifactId, String version, String type, String classifier )
+    private Artifact createArtifact( String groupId, String artifactId,
+            String version, String type, String classifier )
     {
-        return artifactFactory.createArtifactWithClassifier( groupId, artifactId, version, type, classifier );
+        return artifactFactory.createArtifactWithClassifier( groupId,
+                artifactId, version, type, classifier );
     }
 
-    private Artifact createArtifact( String coords ) throws MojoExecutionException
+    private Artifact createArtifact( String coords )
+            throws MojoExecutionException
     {
         String[] strings = coords.split( ":" );
         if ( strings.length < 4 || strings.length > 5 )
         {
-            throw new MojoExecutionException( "Can not parse coordinates: " + coords );
+            throw new MojoExecutionException( "Can not parse coordinates: "
+                                              + coords );
         }
         String groupId = strings[0];
         String artifactId = strings[1];

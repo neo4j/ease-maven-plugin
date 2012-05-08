@@ -73,14 +73,16 @@ public class FreezeMojo extends AbstractMojo
         }
         if ( !pomWasAdded )
         {
-            addArtifactCoordinates( builder, project.getGroupId(), project.getArtifactId(), "pom",
-                    project.getVersion(), null );
+            addArtifactCoordinates( builder, project.getGroupId(),
+                    project.getArtifactId(), "pom", project.getVersion(), null );
         }
 
-        EaseHelper.writeAndAttachArtifactList( builder, project, projectHelper, getLog() );
+        EaseHelper.writeAndAttachArtifactList( builder, project, projectHelper,
+                getLog() );
     }
 
-    private void addArtifactCoordinates( StringBuilder builder, Artifact attached )
+    private void addArtifactCoordinates( StringBuilder builder,
+            Artifact attached )
     {
         String groupId = attached.getGroupId();
         String artifactId = attached.getArtifactId();
@@ -88,7 +90,8 @@ public class FreezeMojo extends AbstractMojo
         String type = "pom";
         if ( !"pom".equals( attached.getType() ) )
         {
-            type = FileUtils.extension( attached.getFile().getName() );
+            type = FileUtils.extension( attached.getFile()
+                    .getName() );
         }
         String version = attached.getVersion();
         String classifier = null;
@@ -96,17 +99,25 @@ public class FreezeMojo extends AbstractMojo
         {
             classifier = attached.getClassifier();
         }
-        addArtifactCoordinates( builder, groupId, artifactId, type, version, classifier );
+        addArtifactCoordinates( builder, groupId, artifactId, type, version,
+                classifier );
     }
 
-    private void addArtifactCoordinates( StringBuilder builder, String groupId, String artifactId, String type,
-            String version, String classifier )
+    private void addArtifactCoordinates( StringBuilder builder, String groupId,
+            String artifactId, String type, String version, String classifier )
     {
-        builder.append( groupId ).append( ':' ).append( artifactId ).append( ':' ).append( type ).append( ':' );
+        builder.append( groupId )
+                .append( ':' )
+                .append( artifactId )
+                .append( ':' )
+                .append( type )
+                .append( ':' );
         if ( classifier != null )
         {
-            builder.append( classifier ).append( ':' );
+            builder.append( classifier )
+                    .append( ':' );
         }
-        builder.append( version ).append( '\n' );
+        builder.append( version )
+                .append( '\n' );
     }
 }

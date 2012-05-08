@@ -30,12 +30,14 @@ import org.codehaus.plexus.util.FileUtils;
 
 class EaseHelper
 {
-    static void writeAndAttachArtifactList( StringBuilder builder, MavenProject project,
-            MavenProjectHelper projectHelper, Log log ) throws MojoExecutionException
+    static void writeAndAttachArtifactList( StringBuilder builder,
+            MavenProject project, MavenProjectHelper projectHelper, Log log )
+            throws MojoExecutionException
     {
-        String buildDir = project.getBuild().getDirectory();
-        String destFile = buildDir + File.separator + project.getArtifactId() + "-" + project.getVersion()
-                          + "-artifacts.txt";
+        String buildDir = project.getBuild()
+                .getDirectory();
+        String destFile = buildDir + File.separator + project.getArtifactId()
+                          + "-" + project.getVersion() + "-artifacts.txt";
         try
         {
             if ( FileUtils.fileExists( destFile ) )
@@ -50,9 +52,11 @@ class EaseHelper
         }
         catch ( IOException ioe )
         {
-            throw new MojoExecutionException( "Could not write artifact list.", ioe );
+            throw new MojoExecutionException( "Could not write artifact list.",
+                    ioe );
         }
-        projectHelper.attachArtifact( project, "txt", "artifacts", FileUtils.getFile( destFile ) );
+        projectHelper.attachArtifact( project, "txt", "artifacts",
+                FileUtils.getFile( destFile ) );
         log.info( "Successfully attached artifact list to the project." );
     }
 }
