@@ -26,6 +26,12 @@
               <artifactListLocation>${basedir}/../example-aggregate/target/ease-example-aggregate-${project.version}-artifacts.txt</artifactListLocation>
             </configuration>
           </execution>
+          <execution>
+            <id>attach-artifact-signatures</id>
+            <goals>
+              <goal>attachsignatures</goal>
+            </goals>
+          </execution>
         </executions>
       </plugin>
     </plugins>
