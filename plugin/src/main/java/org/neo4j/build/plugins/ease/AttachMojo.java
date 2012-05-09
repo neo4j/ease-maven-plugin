@@ -34,10 +34,10 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 
 /**
- * Goal which attached (copies of) artifacts for install or deploy.
+ * Attach artifacts for install or deploy.
  * 
  * @goal attach
- * @phase verify
+ * @phase package
  * @requiresProject true
  * @threadSafe true
  */
@@ -192,24 +192,21 @@ public class AttachMojo extends AbstractMojo
                                               + findArtifact.getFile() );
         }
 
-        if ( repository == localRepository )
+        String fileName = artifactToAttach.getFile()
+                .getName();
+        File destination = new File( new File( project.getBuild()
+                .getDirectory() ), fileName );
+        try
         {
-            String fileName = artifactToAttach.getFile()
-                    .getName();
-            File destination = new File( new File( project.getBuild()
-                    .getDirectory() ), fileName );
-            try
-            {
-                FileUtils.copyFileIfModified( artifactToAttach.getFile(),
-                        destination );
-            }
-            catch ( IOException ioe )
-            {
-                throw new MojoExecutionException( "Could not copy file: "
-                                                  + fileName, ioe );
-            }
-            artifactToAttach.setFile( destination );
+            FileUtils.copyFileIfModified( artifactToAttach.getFile(),
+                    destination );
         }
+        catch ( IOException ioe )
+        {
+            throw new MojoExecutionException( "Could not copy file: "
+                                              + fileName, ioe );
+        }
+        artifactToAttach.setFile( destination );
 
         project.addAttachedArtifact( artifactToAttach );
         getLog().info( "Attached: " + artifactToAttach );
