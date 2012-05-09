@@ -8,10 +8,11 @@ It doesn't replace `install` or `deploy` but modifies the project before these t
 The plugin works by adding simple metadata to artifacts during the release build,
 and then reading that data when deploying.
 Which means release build and deploy are fully separated.
-No building or dependency resolution happens during release, it's just deploying existing artifacts from a known filesytemm location.
+No building or dependency resolution happens during release, it's just deploying existing artifacts from a known filesytem location.
 
 * The `freeze` and `aggregate` goals are used while building a release.
 * The `attach` goal is used when deploying a release.
+* The `attachsignatures` goal is used when deploying with gpg signatures included.
 
 The `freeze` goal should be added to all projects included in the release.
 
@@ -19,7 +20,7 @@ The `aggregate` goal is used in a separate project.
 This project should have everything that should go into the release as dependencies.
 As the `aggregate` goal attaches the resulting list to the project just like the `freeze` goal, it can be composed in multiple levels.
 
-The `attach` goal is used in a separate project.
+The `attach` and `attachsignatures` goals are used in a separate project.
 This project should only be concerned with where to find the artifact list and the artifacts, and how to deploy the artifacts.
 
 Add the plugin executions to the 'pom.xml' files.
@@ -30,10 +31,11 @@ Then just use normal `install` or `deploy` goals to bring it to action.
 * `freeze`: Lists the artifacts (like the default jar, the sources jar etc.) atttached to a project and attaches the list to the project, as a -artifacts.txt artifact.
 * `aggregate`: Traverses the dependencies of a project and aggragates artifacts.txt files into one single list, which is then attached to the project. Note that _any_ missing artifacts.txt file will fail the build -- use includes/excludes filtering to target the dependencies you want.
 * `attach`: Attaches all artifacts in a given artifacts.txt file to the project. A file location for this file is used to prevent any dependency resolution whatsoever to take place. A separate local repo can be defined for loading the artifacts from, which is very much recommended.
+* `attachsignatures`: Attaches the signatures of all artifacts to the project. Missing signatures will fail the build.
 
 === Use the included test/example projects ===
 
 * `mvn clean install -Dprepare` will install the plugin and freeze some artifacts and then aggregate them.
-* `mvn clean install -Dperform` will attach the previously created artifacts to a project and install them (again).
+* `mvn clean install -Dperform` will attach the previously created artifacts to a project and install them (again). To deploy with gpg signatures, remove the `<phase>none</phase>` setting from the attach example project. 
 
 
