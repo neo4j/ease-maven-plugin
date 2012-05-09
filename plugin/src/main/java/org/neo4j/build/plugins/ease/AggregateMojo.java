@@ -57,7 +57,7 @@ import org.codehaus.plexus.util.FileUtils;
  * plugin will fail the build.
  * 
  * @goal aggregate
- * @phase verify
+ * @phase package
  * @requiresProject true
  * @threadSafe true
  */
