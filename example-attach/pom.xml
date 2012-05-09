@@ -28,6 +28,7 @@
           </execution>
           <execution>
             <id>attach-artifact-signatures</id>
+            <phase>none</phase>
             <goals>
               <goal>attachsignatures</goal>
             </goals>
