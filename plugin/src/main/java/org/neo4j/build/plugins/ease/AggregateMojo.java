@@ -31,6 +31,9 @@ import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.resolver.ArtifactCollector;
+import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
+import org.apache.maven.artifact.resolver.ArtifactResolutionException;
+import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.artifact.resolver.filter.AndArtifactFilter;
 import org.apache.maven.artifact.resolver.filter.ArtifactFilter;
 import org.apache.maven.plugin.AbstractMojo;
@@ -103,6 +106,15 @@ public class AggregateMojo extends AbstractMojo
     protected ArtifactFactory artifactFactory;
 
     /**
+     * Used to look up Artifacts in the remote repository.
+     * 
+     * @component role="org.apache.maven.artifact.resolver.ArtifactResolver"
+     * @required
+     * @readonly
+     */
+    protected ArtifactResolver artifactResolver;
+
+    /**
      * Location of the local repository.
      * 
      * @parameter expression="${localRepository}"
@@ -110,6 +122,15 @@ public class AggregateMojo extends AbstractMojo
      * @required
      */
     protected ArtifactRepository localRepository;
+
+    /**
+     * List of Remote Repositories used by the resolver
+     * 
+     * @parameter expression="${project.remoteArtifactRepositories}"
+     * @readonly
+     * @required
+     */
+    protected List<ArtifactRepository> remoteRepositories;
 
     /**
      * @component
@@ -146,7 +167,29 @@ public class AggregateMojo extends AbstractMojo
             Artifact findArtifactsArtifact = artifactFactory.createArtifactWithClassifier(
                     dependency.getGroupId(), dependency.getArtifactId(),
                     dependency.getVersion(), "txt", "artifacts" );
-            Artifact artifactsArtifact = localRepository.find( findArtifactsArtifact );
+            Artifact artifactsArtifact = null;
+            try
+            {
+                artifactsArtifact = localRepository.find( findArtifactsArtifact );
+            }
+            catch ( NoSuchMethodError nsm )
+            {
+                artifactsArtifact = findArtifactsArtifact;
+                try
+                {
+                    this.artifactResolver.resolve( findArtifactsArtifact, this.remoteRepositories, this.localRepository );
+                }
+                catch ( ArtifactResolutionException e )
+                {
+                    throw new MojoExecutionException(
+                            "Could not resolve an artifact list for: " + dependency );
+                }
+                catch (ArtifactNotFoundException e)
+                {
+                    throw new MojoExecutionException(
+                            "Could not find an artifact list for: " + dependency );
+                }
+            }
             File artifactsFile = artifactsArtifact.getFile();
             if ( !artifactsFile.exists() )
             {
@@ -157,7 +200,14 @@ public class AggregateMojo extends AbstractMojo
             String artifactList = null;
             try
             {
-                artifactList = FileUtils.fileRead( artifactsFile, "UTF-8" );
+                try
+                {
+                    artifactList = FileUtils.fileRead( artifactsFile, "UTF-8" );
+                }
+                catch (NoSuchMethodError nsme)
+                {
+                    artifactList = FileUtils.fileRead( artifactsFile );
+                }
             }
             catch ( IOException ioe )
             {

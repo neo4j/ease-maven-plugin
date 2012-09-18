@@ -20,6 +20,7 @@ package org.neo4j.build.plugins.ease;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.net.MalformedURLException;
 
 import org.apache.maven.artifact.Artifact;
@@ -28,6 +29,9 @@ import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
 import org.apache.maven.artifact.repository.MavenArtifactRepository;
 import org.apache.maven.artifact.repository.layout.DefaultRepositoryLayout;
+import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
+import org.apache.maven.artifact.resolver.ArtifactResolutionException;
+import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
@@ -77,6 +81,15 @@ public class AttachMojo extends AbstractMojo
     protected ArtifactFactory artifactFactory;
 
     /**
+     * Used to look up Artifacts in the remote repository.
+     * 
+     * @component role="org.apache.maven.artifact.resolver.ArtifactResolver"
+     * @required
+     * @readonly
+     */
+    protected ArtifactResolver artifactResolver;
+
+    /**
      * Location of the local repository.
      * 
      * @parameter expression="${localRepository}"
@@ -84,6 +97,15 @@ public class AttachMojo extends AbstractMojo
      * @required
      */
     protected ArtifactRepository localRepository;
+
+    /**
+     * List of Remote Repositories used by the resolver
+     * 
+     * @parameter expression="${project.remoteArtifactRepositories}"
+     * @readonly
+     * @required
+     */
+    protected List<ArtifactRepository> remoteRepositories;
 
     /**
      * Is either the local repo or a separate artifact repo in the file system.
@@ -99,8 +121,16 @@ public class AttachMojo extends AbstractMojo
         String[] lines = null;
         try
         {
-            lines = FileUtils.fileRead( artifactListLocation, "UTF-8" )
-                    .split( "\n" );
+            try
+            {
+                lines = FileUtils.fileRead( artifactListLocation, "UTF-8" )
+                        .split( "\n" );
+            }
+            catch ( NoSuchMethodError nsm )
+            {
+                lines = FileUtils.fileRead( artifactListLocation )
+                        .split( "\n" );
+            }
         }
         catch ( IOException ioe )
         {
@@ -184,7 +214,29 @@ public class AttachMojo extends AbstractMojo
     private void findAndAttachExternalArtifact( Artifact findArtifact,
             ArtifactRepository repository ) throws MojoExecutionException
     {
-        Artifact artifactToAttach = repository.find( findArtifact );
+        Artifact artifactToAttach = null;
+        try
+        {
+            artifactToAttach = repository.find( findArtifact );
+        }
+        catch ( NoSuchMethodError nsm )
+        {
+            artifactToAttach = findArtifact;
+            try
+            {
+                this.artifactResolver.resolve( artifactToAttach, this.remoteRepositories, this.localRepository );
+            }
+            catch ( ArtifactResolutionException e )
+            {
+                throw new MojoExecutionException( "Missing artifact file: "
+                                                  + findArtifact.getFile() );
+            }
+            catch (ArtifactNotFoundException e)
+            {
+                throw new MojoExecutionException( "Missing artifact file: "
+                                                  + findArtifact.getFile() );
+            }
+        }
         if ( !artifactToAttach.getFile()
                 .exists() )
         {
@@ -198,8 +250,15 @@ public class AttachMojo extends AbstractMojo
                 .getDirectory() ), fileName );
         try
         {
-            FileUtils.copyFileIfModified( artifactToAttach.getFile(),
-                    destination );
+            try
+            {
+                FileUtils.copyFileIfModified( artifactToAttach.getFile(),
+                                              destination );
+            }
+            catch ( NoSuchMethodError nsm )
+            {
+                FileUtils.copyFile( artifactToAttach.getFile(), destination );
+            }
         }
         catch ( IOException ioe )
         {
