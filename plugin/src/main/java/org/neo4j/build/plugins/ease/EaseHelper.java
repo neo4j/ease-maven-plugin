@@ -47,7 +47,14 @@ class EaseHelper
             {
                 FileUtils.mkdir( buildDir );
             }
-            FileUtils.fileWrite( destFile, "UTF-8", builder.toString() );
+            try
+            {
+                FileUtils.fileWrite( destFile, "UTF-8", builder.toString() );
+            }
+            catch ( NoSuchMethodError nsm )
+            {
+                FileUtils.fileWrite( destFile, builder.toString() );
+            }
         }
         catch ( IOException ioe )
         {

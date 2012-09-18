@@ -157,7 +157,14 @@ public class AggregateMojo extends AbstractMojo
             String artifactList = null;
             try
             {
-                artifactList = FileUtils.fileRead( artifactsFile, "UTF-8" );
+                try
+                {
+                    artifactList = FileUtils.fileRead( artifactsFile, "UTF-8" );
+                }
+                catch (NoSuchMethodError nsme)
+                {
+                    artifactList = FileUtils.fileRead( artifactsFile );
+                }
             }
             catch ( IOException ioe )
             {

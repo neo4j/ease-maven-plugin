@@ -99,8 +99,16 @@ public class AttachMojo extends AbstractMojo
         String[] lines = null;
         try
         {
-            lines = FileUtils.fileRead( artifactListLocation, "UTF-8" )
-                    .split( "\n" );
+            try
+            {
+                lines = FileUtils.fileRead( artifactListLocation, "UTF-8" )
+                        .split( "\n" );
+            }
+            catch ( NoSuchMethodError nsm )
+            {
+                lines = FileUtils.fileRead( artifactListLocation )
+                        .split( "\n" );
+            }
         }
         catch ( IOException ioe )
         {
@@ -198,8 +206,15 @@ public class AttachMojo extends AbstractMojo
                 .getDirectory() ), fileName );
         try
         {
-            FileUtils.copyFileIfModified( artifactToAttach.getFile(),
-                    destination );
+            try
+            {
+                FileUtils.copyFileIfModified( artifactToAttach.getFile(),
+                                              destination );
+            }
+            catch ( NoSuchMethodError nsm )
+            {
+                FileUtils.copyFile( artifactToAttach.getFile(), destination );
+            }
         }
         catch ( IOException ioe )
         {
