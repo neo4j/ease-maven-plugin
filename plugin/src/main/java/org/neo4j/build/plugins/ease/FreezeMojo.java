@@ -61,7 +61,6 @@ public class FreezeMojo extends AbstractMojo
      * If we should ignore artifacts that do not have a file assigned.
      *
      * @parameter expression="${ignoreEmptyArtifacts}" default-value="false"
-     * @readonly
      */
     protected boolean ignoreEmptyArtifacts;
 
