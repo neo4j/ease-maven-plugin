@@ -58,6 +58,14 @@ public class FreezeMojo extends AbstractMojo
     private List attachedArtifacts;
 
     /**
+     * If we should ignore artifacts that do not have a file assigned.
+     *
+     * @parameter expression="${ignoreEmptyArtifacts}" default-value="false"
+     * @readonly
+     */
+    protected boolean ignoreEmptyArtifacts;
+
+    /**
      * @component
      */
     protected MavenProjectHelper projectHelper;
@@ -94,6 +102,13 @@ public class FreezeMojo extends AbstractMojo
         String type = "pom";
         if ( !"pom".equals( attached.getType() ) )
         {
+            if ( ignoreEmptyArtifacts && (attached.getFile() == null ||
+                                    ! attached.getFile().isFile()) )
+            {
+                getLog().debug( "Artifact has no file assigned, ignored: " + attached );
+                return;
+            }
+
             type = FileUtils.extension( attached.getFile()
                     .getName() );
         }
