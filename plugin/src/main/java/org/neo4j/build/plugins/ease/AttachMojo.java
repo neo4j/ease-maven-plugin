@@ -192,10 +192,11 @@ public class AttachMojo extends AbstractMojo
                                               + findArtifact.getFile() );
         }
 
+        String groupId = artifactToAttach.getGroupId();
         String fileName = artifactToAttach.getFile()
                 .getName();
         File destination = new File( new File( project.getBuild()
-                .getDirectory() ), fileName );
+                .getDirectory() ), groupId + "-" + fileName );
         try
         {
             FileUtils.copyFileIfModified( artifactToAttach.getFile(),
@@ -203,8 +204,8 @@ public class AttachMojo extends AbstractMojo
         }
         catch ( IOException ioe )
         {
-            throw new MojoExecutionException( "Could not copy file: "
-                                              + fileName, ioe );
+            throw new MojoExecutionException( "Could not copy file: " + fileName
+                                             + " (" + groupId + ")", ioe );
         }
         artifactToAttach.setFile( destination );
 
